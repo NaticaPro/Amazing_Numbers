@@ -1,0 +1,320 @@
+
+https://github.com/NaticaPro/Amazing_Numbers.git
+package numbers;
+import java.util.Scanner; 
+ 
+enum Properties {
+    EVEN, 
+    ODD,
+    BUZZ, 
+    DUCK, 
+    PALINDROMIC, 
+    GAPFUL, 
+    SPY, 
+    SQUARE,
+    SUNNY,
+    JUMPING,
+    HAPPY,
+    SAD;
+    public static String stringOfProperties() {
+    	int i = 0;
+    	StringBuilder build = new StringBuilder("Available properties: [");
+    	for (Properties item : Properties.values()) {
+    		build.append( i == 0 ? "" : ", ");
+    		build.append(item.name());
+    		i++;
+    	}
+    	build.append("]");
+    	return build.toString();
+    }
+    static String getNamePropery(int index) {
+        for (Properties item : Properties.values()) {
+            if (item.ordinal() == index) { return item.toString(); }
+        }
+        return "";
+    }
+    @Override
+    public String toString() {
+        return this.name().toLowerCase();
+    }
+} 
+class NumberCard {
+    private long startNumberC;
+    private int counter = 0;    
+    String[] filters;
+    boolean arrProperties[][];
+    long[] numbersC;
+    public int getCounter() { return counter; }
+    NumberCard(String[] numberStr) {  
+        this.startNumberC = Long.valueOf(numberStr[0]);   
+        this.counter = Integer.parseInt(numberStr[1]);
+        if (numberStr.length > 2) {
+            this.filters = new String[numberStr.length - 2];
+            for (int i = 0; i < filters.length; i++) {
+                filters[i] = numberStr[2 + i].toLowerCase();
+            }
+        } 
+        int len = counter == 0 ? counter + 1 : counter;
+        this.arrProperties = new boolean[len][12];
+        this.numbersC = new long[len];
+        fillCard();
+    } 
+    boolean isPalindromic(long number) {
+        String string = Long.toString(number);
+        int len = string.length();
+        if (len == 1) { return true; }
+        for (int i = 0; i < len / 2; i++) {
+            if (string.charAt(i) != string.charAt(len - 1 - i)) {
+                return false; 
+            }
+        }
+        return true;
+    }
+    boolean isGapful(long number, String strN) {
+        int len = strN.length();
+        if (len < 3) { return false;}  
+        return number % ((strN.charAt(0) - '0') * 10 + strN.charAt(len - 1) - '0') == 0 ;
+    }
+    boolean isSpy(long number) {        
+        String str = Long.toString(number);
+        int[] arrNum = new int[str.length()];
+        long sum = 0L;
+        long prod = 1L;
+        int digit;
+        for (int i = 0; i < str.length(); i++) {
+            digit = str.charAt(i)- '0';
+            sum  += digit;
+            prod *= digit; 
+        }
+        return sum == prod; 
+    }
+    boolean isJumping(String strN) {
+        int len = strN.length();
+        if (len == 1) { return true; }
+        for (int i = 1; i < len; i++) {
+            if (Math.abs(strN.charAt(i - 1) - strN.charAt(i)) != 1) {
+                return false; 
+            }
+        }
+        return true;
+    }
+    boolean isHappy(long number) {        
+        while (true) {
+            String strN = Long.toString(number);
+            number = 0;
+            for (int i = 0; i < strN.length(); i++) {
+                number += Math.pow(strN.charAt(i) - '0', 2);
+            }
+            if (number < 11) {
+                return number == 1 || number == 7 || number == 10 ? true : false;
+            }
+        }
+    } 
+    int findIndexFilter(String filter) {   
+        int ind = filter.charAt(0) == '-' ? 1 : 0;
+        for (Properties item : Properties.values()) {
+            if (filter.substring(ind).equals(item.toString())) {
+                return item.ordinal();
+            }
+        }   
+        return -1;
+    }
+    boolean calculateProperyValue(int index, long value) {
+        boolean flg;
+        switch (index) {
+            case 0:  flg = value % 2 == 0;                        break;  // even
+            case 1:  flg = value % 2 != 0;                        break;  // odd 
+            case 2:  flg = value % 7 == 0 || value % 10 == 7;     break;  // buzz           
+            case 3:  flg = Long.toString(value).contains("0");    break;  // duck         
+            case 4:  flg = isPalindromic(value);                  break;  // palindromic
+            case 5:  flg = isGapful(value, Long.toString(value)); break;  // gapful
+            case 6:  flg = isSpy(value);                          break;  // spy
+            case 7:  flg = Math.sqrt(value) % 1 == 0;             break;  // square
+            case 8:  flg = Math.sqrt(value + 1) % 1 == 0;         break;  // sunny
+            case 9:  flg = isJumping(Long.toString(value));       break;  // jumping
+            case 10: flg = isHappy(value);                        break;  // happy
+            case 11: flg = !isHappy(value);                       break;  // sad
+            default: flg = false;  
+        }
+        return flg;  
+    }
+    boolean isFilter(long current) {
+        if (filters == null) { return true; }
+        boolean flg = true;
+        boolean curf;
+        for (String filter : filters) {
+            curf = calculateProperyValue(findIndexFilter(filter), current);
+            flg = flg && (filter.charAt(0) == '-' ? !curf : curf);  
+        }
+        return flg;
+    } 
+    void fillCard() {       
+        long current;
+        int s = counter == 0 ? counter + 1: counter;
+        int index = 0;
+        int i = 0;
+        while ( i < s) {
+            current = startNumberC + index; 
+            index++;           
+            if (!isFilter(current)) {
+                continue;
+            }
+            numbersC[i] = current;
+            for (int j = 0; j < 12; j++) {
+                arrProperties[i][j] = calculateProperyValue(j, current);
+            }
+            i++;
+        }  
+    }   
+    void printNumberCard() {
+        System.out.printf("Properties of %d%n", numbersC[0]);
+        for (int j = 0; j < arrProperties[0].length; j++) {
+            System.out.printf("%12s: %s%n", Properties.getNamePropery(j), arrProperties[0][j]);
+        } 
+        System.out.println(""); 
+    }   
+    void printNumberList() {                     
+        int p;      
+        for (int i = 0; i < arrProperties.length; i++) {
+            p = 0;
+            System.out.printf("%d is", numbersC[i]);
+            for (int j = 0; j < arrProperties[0].length; j++) {
+                if (arrProperties[i][j]) {
+                    System.out.printf("%s%s", p == 0 ? " " : ", " , Properties.getNamePropery(j));
+                    p++;
+                }                
+            }
+            System.out.println("");      
+        }
+    }
+}  //*************************
+class Main {
+    enum EnterType {
+        ERRORINPUT,
+        COMMANDEXE,
+        EMPTYINPUT,
+        ZERO
+    }
+    static EnterType enter;
+    static final Scanner scan = new Scanner(System.in);
+    String[] inputString; 
+    String[][] pairs = {{"even", "odd"}, {"duck", "spy"}, {"sunny", "square"}, {"happy", "sad"}}; 
+    void printInstructions() {
+        System.out.println("Supported requests:");
+        System.out.println("- enter a natural number to know its properties;");
+        System.out.println("- enter two natural numbers to obtain the properties of the list:");
+        System.out.println("  * the first parameter represents a starting number;");
+        System.out.println("  * the second parameter shows how many consecutive numbers are to be printed;");
+        System.out.println("- two natural numbers and properties to search for;");
+        System.out.println("- a property preceded by minus must not be present in numbers;");
+        System.out.println("- separate the parameters with one space;");
+        System.out.println("- enter 0 to exit.");        
+    }  
+    boolean isProperyName(String name) {
+        for (Properties item : Properties.values()) {
+            if (name.matches("-?" + item.toString())) {  return true;   }
+        }
+        return false;
+    }
+    String checkProperyParameters(String arg) {
+        if (inputString.length < 3) {
+            if (!inputString[0].matches("\\d+")) {
+                enter = EnterType.ERRORINPUT;
+                return "The first parameter should be a natural number or zero.";
+            } else if (!inputString[1].matches("\\d+")) {  
+                enter = EnterType.ERRORINPUT;          
+                return "The second parameter should be a natural number."; 
+            } 
+        } else {  
+            int err = 0; 
+            StringBuilder build = new StringBuilder();
+            for (int i = 2; i < inputString.length; i++) {
+                inputString[i] = inputString[i].toLowerCase();
+                if (!isProperyName(inputString[i])) {
+                    build.append((err == 0 ? "" : ", ") + inputString[i].toUpperCase());
+                    err++;
+                }
+            }   //*************************************  check: properties are wrong
+            if (err > 0) {
+                enter = EnterType.ERRORINPUT;
+                return (err > 1 ? String.format("%nThe properties [%s] are wrong.%n", build.toString()) :
+                        String.format("%nThe property [%s] is wrong.%n", build.toString()) ) + Properties.stringOfProperties();                           
+            } 
+            //**************************************   check:  [propery, -propery]
+            String line = arg.substring(inputString[0].length() + inputString[1].length() - 1);
+            for (int i = 2; i < inputString.length - 1; i++) {
+                String antiProp = inputString[i].charAt(0) == '-' ? " " + inputString[i].substring(1) : "-" + inputString[i];
+                line = line.substring(inputString[i].length());
+                if (line.matches(".*" +antiProp +".*")) {
+                    build.append(inputString[i] + ", " + antiProp);  
+                    enter = EnterType.ERRORINPUT;                  
+                    return String.format("%nThe request contains mutually exclusive properties: [%s]%n%s", build.toString(),
+                                             "There are no numbers with these properties.");                                          
+                } 
+            }      //*******************   check:  pairs of mutually exclusive properties   
+            if (inputString.length > 3)  {  
+                arg = arg.toLowerCase();
+                for (String[] pair : pairs) {
+                    boolean flgC = (arg.contains(" " + pair[0]) && arg.contains(" " + pair[1])) || 
+                                   (arg.contains("-" + pair[0]) && arg.contains("-" + pair[1]));      
+                    if (flgC) {
+                        enter = EnterType.ERRORINPUT;
+                        return String.format("The request contains mutually exclusive properties: [%s, %s]%n%s", pair[0], pair[1],
+                                             "There are no numbers with these properties."); 
+                    }                    
+                }
+            }    
+        }
+        enter = EnterType.COMMANDEXE;
+        return "";
+    }
+    String input() {
+        String input = scan.nextLine().trim();
+        if (input.isEmpty()) {
+            enter = EnterType.EMPTYINPUT;
+            return "";
+        }
+        if (input.matches("0")) {
+            enter = EnterType.ZERO;
+            return "";
+        }   
+        int len = input.split("\\s+").length;
+        if (len == 1) {
+            inputString = new String[2];
+            inputString[0] = input; 
+            inputString[1] = "0";
+        } else {            
+            inputString = input.split("\\s+");                          
+        }
+        return   checkProperyParameters(input);  
+    }
+    void startAmazingNumbersAPP() {
+        System.out.println("Welcome to Amazing Numbers!\n"); 
+        printInstructions();         
+        while (true) {
+            System.out.println("\nEnter a request:");
+            String errorMsg = input();  
+            switch (enter) {
+                case COMMANDEXE:
+                    NumberCard card = new NumberCard(inputString);
+                    if (card.getCounter() == 0) { card.printNumberCard(); } 
+                    else                        { card.printNumberList(); }                      
+                    break; 
+                case ERRORINPUT:
+                    System.out.println(errorMsg);  
+                    break;         
+                case EMPTYINPUT:  
+                    printInstructions();  
+                    break;
+                case ZERO:  
+                    System.out.println("Goodbye!\nProcess finished with exit code 0");
+                    return;    
+                default:       
+            }
+        }  
+    }
+    public static void main(String[] args) {
+        Main main = new Main();
+        main.startAmazingNumbersAPP();
+    }
+}
